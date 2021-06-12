@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name esr-meter)(type Legacy)(uri ${KIPRJMOD}/esr-meter.lib)(options "")(descr ""))
+)

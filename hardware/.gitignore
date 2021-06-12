@@ -1,0 +1,14 @@
+*.000
+*.bak
+*.bck
+*.kicad_pcb-bak
+*.sch-bak
+*.tmp
+_autosave-*
+_saved_*
+*-save.pro
+*-save.kicad_pcb
+*-rescue.lib
+*.net
+fp-info-cache
+gerbers/

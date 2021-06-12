@@ -1,0 +1,6 @@
+*.net
+*.log
+*.raw
+*.fft
+*.plt
+Draft*

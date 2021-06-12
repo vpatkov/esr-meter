@@ -1,0 +1,10 @@
+(module BindingPost (layer F.Cu) (tedit 6028F7EC)
+  (fp_text reference REF** (at 0 7.62 180) (layer F.SilkS) hide
+    (effects (font (size 1 1) (thickness 0.15)))
+  )
+  (fp_text value BindingPost (at 0 -7.62 180) (layer F.Fab) hide
+    (effects (font (size 1 1) (thickness 0.15)))
+  )
+  (pad 1 thru_hole circle (at 0 0) (size 12 12) (drill 5.5) (layers *.Cu *.Mask))
+  (pad 2 thru_hole circle (at 19.05 0) (size 12 12) (drill 5.5) (layers *.Cu *.Mask))
+)

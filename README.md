@@ -10,7 +10,8 @@ for quick finding bad electrolytic capacitors.
 - Open terminals voltage is 50 mVpp (ok for in-circuit measurements, safe
   for polarized caps)
 - Short terminals current is 5 mApp
-- Rechargeable by USB
+- Rechargeable by Micro-USB (300 mA)
+- Auto power-off after 3 minutes of inactivity
 - Sexy HP bubble display (it's the main feature)
 
 
@@ -32,13 +33,11 @@ as `F <level>`.
 During normal operation the meter continuously shows the measured resistance
 (ESR) in ohms, or `-OL-` if it's more than 99.99 ohms.
 
-To compensate leads resistance (set zero), short the leads and long press the
-button (> 0.5 seconds). You can't compensate more than 2 ohms (locked by
-software to keep acceptable accuracy) — find a better leads or connect
-capacitors directly to the binding post. If the meter fails to compensate,
-it shows `SHIt` (stands for "your leads are shit").
-
-To charge the meter use any USB charger capable to source 300 mA.
+To compensate test leads resistance (set zero), short the leads and long press
+the button (> 0.5 seconds). You can't compensate more than 2 ohms — find a
+better leads or connect the capacitor under test directly to the binding post.
+If the meter refuse to compensate, it shows `SHIt` (stands for "your leads are
+shit").
 
 
 ## How it works

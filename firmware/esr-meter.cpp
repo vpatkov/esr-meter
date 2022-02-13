@@ -37,15 +37,16 @@ static Flags flags;
 static uint8_t probe;
 static uint8_t probe_open;
 static uint8_t zero = 0;
+static uint16_t inactivity_timer = 0;  /* seconds */
 
-/* 1 kHz general-purpose interrupt */
+/* 1024 Hz general-purpose interrupt */
 ISR(TIMER1_COMPA_vect)
 {
-        static uint8_t cycle = 0;
+        static uint16_t cycle = 0;
 
-        /* Poll the button (31.25 Hz) */
+        /* Poll the button (32 Hz) */
         if (cycle % 32 == 0) {
-                constexpr uint8_t long_press = 16;  /* 0.512 s */
+                constexpr uint8_t long_press = 16;  /* 0.5 s */
                 static uint8_t cnt = 0;
                 static bool prev = 1;
                 if (Gpio::read(button) != prev) {
@@ -64,7 +65,7 @@ ISR(TIMER1_COMPA_vect)
 
         /* Measure the probe voltage  */
         if (flags.probe_adc_enable) {
-                constexpr uint8_t nr_samples = 128;  /* 128 ms (~8 Hz) */
+                constexpr uint8_t nr_samples = 128;  /* 8 Hz */
                 static uint8_t cnt = 0;
                 static uint16_t acc = 0;
 
@@ -80,9 +81,13 @@ ISR(TIMER1_COMPA_vect)
                 ADCSRA = 1<<ADEN | 1<<ADSC | 1<<ADPS2 | 1<<ADPS1;  /* 125 kHz */
         }
 
-        /* Scan the display (500 Hz) */
+        /* Scan the display (512 Hz) */
         if (cycle % 2 == 0)
                 display.scan();
+
+        /* Increase inactivity timer (1 Hz) */
+        if (cycle % 1024 == 0)
+                inactivity_timer++;
 
         cycle++;
 }
@@ -181,10 +186,10 @@ int main()
         DIDR1 = 0b11;
         PRR = 1<<PRTWI | 1<<PRTIM2 | 1<<PRTIM0 | 1<<PRSPI | 1<<PRUSART0;
 
-        /* Set up T/C1 for 1 kHz interrupt */
+        /* Set up T/C1 for 1024 Hz interrupt */
         TCCR1A = 0;
         TCCR1B = 1<<WGM12 | 1<<CS11 | 1<<CS10;
-        OCR1A = 124;
+        OCR1A = 121;
         TIMSK1 = 1<<OCIE1A;
 
         display.init();
@@ -197,7 +202,7 @@ int main()
 
         for (;;)
         {
-                if (flags.button_pressed)
+                if (flags.button_pressed || inactivity_timer > 180)
                         power_off();
 
                 if (flags.button_pressed_long) {
@@ -208,6 +213,7 @@ int main()
                                 zero = z;
                                 display.printf(PSTR("\nZErO"));
                         }
+                        inactivity_timer = 0;
                         delay_ms(500);
                         flags.button_pressed_long = 0;
                 }
@@ -216,8 +222,10 @@ int main()
                         int32_t r = calc_esr(probe, probe_open, zero);
                         if (r > 9999)
                                 display.printf(PSTR("\n-OL-"));
-                        else
+                        else {
                                 display.printf(PSTR("\n%4.3ld\b\b."), r);
+                                inactivity_timer = 0;
+                        }
                         flags.probe_updated = 0;
                 }
 

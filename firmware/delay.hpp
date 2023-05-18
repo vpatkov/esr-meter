@@ -31,24 +31,24 @@ enum class DelayRound { closest, down, up };
 inline __attribute__((always_inline))
 void delay_us(double delay, DelayRound round = DelayRound::up)
 {
-        const double cycles = (delay > 0) ? (delay*F_CPU/1e6) : 0;
-        const double cycles_rounded =
-                (round == DelayRound::closest) ? floor(cycles + 0.5) :
-                (round == DelayRound::down) ? floor(cycles) : ceil(cycles);
+	const double cycles = (delay > 0) ? (delay*F_CPU/1e6) : 0;
+	const double cycles_rounded =
+		(round == DelayRound::closest) ? floor(cycles + 0.5) :
+		(round == DelayRound::down) ? floor(cycles) : ceil(cycles);
 
-        delay_cycles(static_cast<unsigned long>(cycles_rounded));
+	delay_cycles(static_cast<unsigned long>(cycles_rounded));
 }
 
 inline __attribute__((always_inline))
 void delay_ms(double delay, DelayRound round = DelayRound::up)
 {
-        delay_us(delay*1e3, round);
+	delay_us(delay*1e3, round);
 }
 
 inline __attribute__((always_inline))
 void delay_s(double delay, DelayRound round = DelayRound::up)
 {
-        delay_us(delay*1e6, round);
+	delay_us(delay*1e6, round);
 }
 
 #endif

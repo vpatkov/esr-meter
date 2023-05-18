@@ -34,9 +34,9 @@
 
 class Print {
 public:
-        void printf(const char *format, ...);
-        void vprintf(const char *format, va_list args);
-        virtual void putc(char c) = 0;
+	void printf(const char *format, ...);
+	void vprintf(const char *format, va_list args);
+	virtual void putc(char c) = 0;
 };
 
 #endif

@@ -10,5 +10,6 @@ _saved_*
 *-save.kicad_pcb
 *-rescue.lib
 *.net
+*.kicad_prl
 fp-info-cache
 gerbers/

@@ -11,7 +11,7 @@ CXX = avr-g++
 OBJCOPY = avr-objcopy
 OBJDUMP = avr-objdump
 SIZE = avr-size -C --mcu=$(MCU)
-AVRDUDE = avrdude -c avrftdi -P usb -p $(MCU_AVRDUDE)
+AVRDUDE = avrdude -c usbasp -P usb -p $(MCU_AVRDUDE)
 
 CXXFLAGS = -mmcu=$(MCU) -DF_CPU=$(F_CPU)
 CXXFLAGS += -c -std=c++17

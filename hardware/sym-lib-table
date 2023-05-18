@@ -1,3 +1,4 @@
 (sym_lib_table
-  (lib (name esr-meter)(type Legacy)(uri ${KIPRJMOD}/esr-meter.lib)(options "")(descr ""))
+  (version 7)
+  (lib (name "esr-meter")(type "KiCad")(uri "${KIPRJMOD}/esr-meter.kicad_sym")(options "")(descr ""))
 )

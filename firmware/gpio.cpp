@@ -57,9 +57,11 @@ void Gpio::set(Pin pin, State state)
 		const uint8_t m = mask(pin);
 		if (state & 0b10) {
 			set_bits(*port, m, state & 0b01);
+			memory_barrier();
 			set_bits(*ddr, m, 1);
 		} else {
 			set_bits(*ddr, m, 0);
+			memory_barrier();
 			set_bits(*port, m, state & 0b01);
 		}
 	}

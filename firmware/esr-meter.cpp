@@ -34,10 +34,9 @@ struct Flags {
 
 static Bubble display;
 static Flags flags;
-static uint8_t probe;
-static uint8_t probe_open;
-static uint8_t zero = 0;
-static uint16_t inactivity_timer = 0;  /* seconds */
+static uint16_t probe;
+static uint16_t probe_open;
+static uint8_t inactivity_timer = 0;  /* seconds */
 
 /* 1024 Hz general-purpose interrupt */
 ISR(TIMER1_COMPA_vect)
@@ -65,11 +64,11 @@ ISR(TIMER1_COMPA_vect)
 
 	/* Measure the probe voltage  */
 	if (flags.probe_adc_enable) {
-		constexpr uint8_t nr_samples = 128;  /* 8 Hz */
+		constexpr uint8_t nr_samples = 64;  /* 16 Hz */
 		static uint8_t cnt = 0;
 		static uint16_t acc = 0;
 
-		acc += ADCH;
+		acc += ADC;
 		if (++cnt == nr_samples) {
 			probe = acc/nr_samples;
 			flags.probe_updated = 1;
@@ -77,7 +76,7 @@ ISR(TIMER1_COMPA_vect)
 			cnt = 0;
 		}
 
-		ADMUX = 1<<ADLAR | probe_adc_channel;
+		ADMUX = probe_adc_channel & 15;
 		ADCSRA = 1<<ADEN | 1<<ADSC | 1<<ADPS2 | 1<<ADPS1;  /* 125 kHz */
 	}
 
@@ -98,9 +97,9 @@ static void power_off()
 	for (;;) {}
 }
 
-static uint8_t adc_measure(uint8_t channel)
+static uint16_t adc_measure(uint8_t channel)
 {
-	constexpr uint8_t nr_samples = 128;
+	constexpr uint8_t nr_samples = 64;
 
 	/* Temporarily disable probe measurements in background */
 	bool probe_adc_enable = flags.probe_adc_enable;
@@ -110,11 +109,11 @@ static uint8_t adc_measure(uint8_t channel)
 
 	/* Averaging */
 	for (uint8_t i = 0; i < nr_samples; i++) {
-		ADMUX = 1<<ADLAR | (channel & 15);
+		ADMUX = channel & 15;
 		ADCSRA = 1<<ADEN | 1<<ADSC | 1<<ADPS2 | 1<<ADPS1;  /* 125 kHz */
 		while (ADCSRA & (1<<ADSC))
 			memory_barrier();
-		acc += ADCH;
+		acc += ADC;
 	}
 
 	/* Restore the flag */
@@ -130,9 +129,9 @@ static void self_test()
 	delay_ms(500);
 
 	/* Check internal (1.1 V) vs external (1.24 V) references */
-	constexpr uint8_t iref_min = 1.1*256/1.24 * 0.9;
-	constexpr uint8_t iref_max = 1.1*256/1.24 * 1.1;
-	uint8_t iref = adc_measure(iref_adc_channel);
+	constexpr uint16_t iref_min = 1.1 * 1024/1.24 * 0.9;
+	constexpr uint16_t iref_max = 1.1 * 1024/1.24 * 1.1;
+	uint16_t iref = adc_measure(iref_adc_channel);
 	if (iref < iref_min || iref > iref_max) {
 		display.printf(PSTR("\nE.rEF"));
 		delay_s(1);
@@ -140,9 +139,9 @@ static void self_test()
 	}
 
 	/* Check the battery voltage */
-	constexpr uint8_t fuel_min = 3.3/(31.6+10)*10 * 256/1.24;
-	constexpr uint8_t fuel_max = 4.2/(31.6+10)*10 * 256/1.24;
-	uint8_t fuel = adc_measure(fuel_adc_channel);
+	constexpr uint16_t fuel_min = 3.3/(31.6+10)*10 * 1024/1.24;
+	constexpr uint16_t fuel_max = 4.2/(31.6+10)*10 * 1024/1.24;
+	uint16_t fuel = adc_measure(fuel_adc_channel);
 	if (fuel < fuel_min) {
 		display.printf(PSTR("\nE.F.LO"));
 		delay_s(1);
@@ -150,30 +149,30 @@ static void self_test()
 	}
 
 	/* Check and save the open probe voltage */
+	constexpr uint16_t probe_min = 25e-3 * 45.3 * 1024/1.24 * 0.8;
+	constexpr uint16_t probe_max = 1023;
 	probe_open = adc_measure(probe_adc_channel);
-	if (probe_open < 190 || probe_open == 255) {
+	if (probe_open < probe_min || probe_open == probe_max) {
 		display.printf(PSTR("\nE.Prb"));
 		delay_s(1);
 		power_off();
 	}
 
 	/* Show the battery level in % */
-	uint8_t fuel_percents =
-		((uint16_t)fuel - fuel_min) * 100 / (fuel_max - fuel_min);
+	uint8_t fuel_percents = (fuel - fuel_min) * 100 / (fuel_max - fuel_min);
 	display.printf(PSTR("\nF%3u"), fuel_percents);
 	delay_ms(500);
 }
 
-/* Return ESR in ohms/100 */
-static int32_t calc_esr(uint8_t v_loaded, uint8_t v_open, uint8_t r_zero)
+/* Return ESR in Ω/100 */
+static int16_t calc_esr(uint16_t v_loaded, uint16_t v_open, uint16_t r_zero)
 {
-	constexpr double r_out = 499.0*10.0/(499.0+10.0);
+	constexpr int32_t r_out = 499.0*10.0/(499.0+10.0) * 100;
 
 	int32_t vl = v_loaded, vo = v_open, rz = r_zero;
-	int32_t r = (vl == vo) ? INT32_MAX :
-		int32_t(100 * r_out) * vl / (vo - vl) - rz;
+	int32_t r = (vl >= vo) ? INT32_MAX : r_out * vl / (vo - vl) - rz;
 
-	return r;
+	return min<int32_t>(r, INT16_MAX);
 }
 
 int main()
@@ -203,13 +202,15 @@ int main()
 	flags = {};
 	flags.probe_adc_enable = 1;
 
+	int16_t zero = 0;
+
 	for (;;)
 	{
 		if (flags.button_pressed || inactivity_timer > 180)
 			power_off();
 
 		if (flags.button_pressed_long) {
-			int32_t z = calc_esr(probe, probe_open, 0);
+			int16_t z = calc_esr(atomic_read(probe), probe_open, 0);
 			if (z > 200)
 				display.printf(PSTR("\nSHIt"));
 			else {
@@ -222,11 +223,11 @@ int main()
 		}
 
 		if (flags.probe_updated) {
-			int32_t r = calc_esr(probe, probe_open, zero);
+			int16_t r = calc_esr(atomic_read(probe), probe_open, zero);
 			if (r > 9999)
 				display.printf(PSTR("\n-OL-"));
 			else {
-				display.printf(PSTR("\n%4.3ld\b\b."), r);
+				display.printf(PSTR("\n%4.3d\b\b."), r);
 				inactivity_timer = 0;
 			}
 			flags.probe_updated = 0;

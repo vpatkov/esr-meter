@@ -2,18 +2,14 @@
 
 ![](photo.png)
 
-Yet another ESR meter. Like most of such meters, it measures the impedance
-at 100 kHz, as if it be pure resistive. So this meter is not for laboratory
+Yet another ESR meter. More precisely, it measures the impedance at 100 kHz in
+assumption it's pure resistive. So this meter is not for laboratory
 measurements, but for finding bad electrolytic capacitors (a typical fault in
 aged electronics).
 
-- The test signal is a 100 kHz sine wave
-- Open terminals voltage is 50 mVpp (ok for in-circuit measurements, safe
-  for polarized caps)
-- Short terminals current is 5 mApp
-- Rechargeable by Micro-USB (300 mA)
+- The test signal is 100 kHz 50 mVpp 10 Ω sine wave
+- Rechargeable from Micro-USB at 300 mA (Li-Po/Li-ion)
 - Auto power-off after 3 minutes of inactivity
-- Sexy HP bubble display (it's the main feature)
 
 
 ## Usage
@@ -34,10 +30,11 @@ as `F <level>`.
 During normal operation the meter continuously shows the measured ESR in Ω,
 or `-OL-` if it's more than 99.99 Ω.
 
-To compensate test leads resistance (set zero), short the leads and long press
-the button. You can't compensate more than 2 Ω — find a better leads or connect
-capacitors directly to the binding post. If the meter refuse to compensate, it
-shows `SHIt` (stands for "your leads are shit").
+To compensate test leads (set zero), short the leads and long press the button.
+You can't compensate more than 2 Ω — find a better leads or connect capacitors
+directly to the binding post. Note that inductance of wires matters at 100 kHz.
+If the meter refuse to compensate, it shows `SHIt` (stands for "your leads are
+shit").
 
 
 ## License

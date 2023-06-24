@@ -5,9 +5,9 @@
 
 using namespace Gpio;
 
-static constexpr uint8_t *PORT(Pin pin)
+static constexpr uint8_t *PORTx(Pin p)
 {
-	switch (pin/8) {
+	switch (p/8) {
 #ifdef PORTA
 	case 0: return const_cast<uint8_t*>(&PORTA);
 #endif
@@ -33,61 +33,68 @@ static constexpr uint8_t *PORT(Pin pin)
 	}
 }
 
-static constexpr uint8_t *DDR(uint8_t *port)
+static constexpr uint8_t *DDRx(uint8_t *portx)
 {
-	return port ? (port - 1) : nullptr;
+	return portx ? (portx - 1) : nullptr;
 }
 
-static constexpr uint8_t *PIN(uint8_t *port)
+static constexpr uint8_t *PINx(uint8_t *portx)
 {
-	return port ? (port - 2) : nullptr;
+	return portx ? (portx - 2) : nullptr;
 }
 
-static constexpr uint8_t mask(Pin pin)
+static constexpr uint8_t mask(Pin p)
 {
-	return 1 << (pin % 8);
+	return 1 << (p % 8);
 }
 
-void Gpio::set(Pin pin, State state)
+bool Gpio::read(Pin p)
 {
+	uint8_t *const portx = PORTx(p);
 	memory_barrier();
-	uint8_t *const port = PORT(pin);
-	if (port) {
-		uint8_t *const ddr = DDR(port);
-		const uint8_t m = mask(pin);
-		if (state & 0b10) {
-			set_bits(*port, m, state & 0b01);
-			memory_barrier();
-			set_bits(*ddr, m, 1);
-		} else {
-			set_bits(*ddr, m, 0);
-			memory_barrier();
-			set_bits(*port, m, state & 0b01);
-		}
-	}
-	memory_barrier();
-}
-
-void Gpio::write(Pin pin, bool val)
-{
-	set(pin, val ? high : low);
-}
-
-void Gpio::toggle(Pin pin)
-{
-	memory_barrier();
-	uint8_t *const port = PORT(pin);
-	if (port) {
-		*port ^= mask(pin);
-	}
-	memory_barrier();
-}
-
-bool Gpio::read(Pin pin)
-{
-	memory_barrier();
-	uint8_t *const port = PORT(pin);
-	const bool v = port ? *PIN(port) & mask(pin) : 0;
+	const bool v = portx ? *PINx(portx) & mask(p) : 0;
 	memory_barrier();
 	return v;
+}
+
+void Gpio::write(Pin p, bool v)
+{
+	uint8_t *const portx = PORTx(p);
+	if (portx) {
+		uint8_t *const ddrx = DDRx(portx);
+		const uint8_t m = mask(p);
+		memory_barrier();
+		set_bits(*portx, m, v);
+		memory_barrier();
+		set_bits(*ddrx, m, 1);
+		memory_barrier();
+	}
+}
+
+void Gpio::tri(Pin p)
+{
+	uint8_t *const portx = PORTx(p);
+	if (portx) {
+		uint8_t *const ddrx = DDRx(portx);
+		const uint8_t m = mask(p);
+		memory_barrier();
+		set_bits(*ddrx, m, 0);
+		memory_barrier();
+		set_bits(*portx, m, 0);
+		memory_barrier();
+	}
+}
+
+void Gpio::pull_up(Pin p)
+{
+	uint8_t *const portx = PORTx(p);
+	if (portx) {
+		uint8_t *const ddrx = DDRx(portx);
+		const uint8_t m = mask(p);
+		memory_barrier();
+		set_bits(*ddrx, m, 0);
+		memory_barrier();
+		set_bits(*portx, m, 1);
+		memory_barrier();
+	}
 }

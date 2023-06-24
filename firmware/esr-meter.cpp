@@ -180,7 +180,7 @@ int main()
 	Gpio::write(power_hold, 1);
 
 	for (auto p : unused_pins)
-		Gpio::set(p, Gpio::pull_up);
+		Gpio::pull_up(p);
 	
 	/* Disable unused peripherals */
 	ACSR = 1<<ACD;

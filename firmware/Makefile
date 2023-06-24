@@ -17,13 +17,13 @@ CXXFLAGS = -mmcu=$(MCU) -DF_CPU=$(F_CPU)
 CXXFLAGS += -c -std=c++17
 CXXFLAGS += -Wall -Wextra -Woverloaded-virtual -Wcast-align -Wundef
 CXXFLAGS += -Wlogical-op -Wredundant-decls -Wshadow -Wsuggest-override
-CXXFLAGS += -Os -flto -fshort-enums
+CXXFLAGS += -O3 -flto -fshort-enums
 CXXFLAGS += -fno-exceptions -funsigned-bitfields
 CXXFLAGS += -g -gdwarf-2
 CXXFLAGS += -MMD -MP
 
 LDFLAGS = -mmcu=$(MCU)
-LDFLAGS += -Os -flto
+LDFLAGS += -O3 -flto -Wno-stringop-overflow
 LDFLAGS += -g
 
 .PHONY: all listing clean program-flash program-fuses size

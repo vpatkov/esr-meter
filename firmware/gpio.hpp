@@ -17,18 +17,10 @@ namespace Gpio
 		G0, G1, G2, G3, G4, G5, G6, G7,
 	};
 
-	/* Values are bitmasks DDR:PORT */
-	enum State: uint8_t {
-		low     = 0b10,
-		high    = 0b11,
-		tri     = 0b00,
-		pull_up = 0b01,
-	};
-
-	void set(Pin pin, State state);
-	bool read(Pin pin);
-	void write(Pin pin, bool val);
-	void toggle(Pin pin);
+	bool read(Pin p);
+	void write(Pin p, bool v);
+	void tri(Pin p);
+	void pull_up(Pin p);
 }
 
 #endif
